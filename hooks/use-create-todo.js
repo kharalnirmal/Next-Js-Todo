@@ -1,7 +1,13 @@
-import { createTodo } from "@/actions/todo-actions";
+import {
+  createTodo,
+  deleteTodo,
+  getTodos,
+  toggleTodo,
+} from "@/actions/todo-actions";
+
 import { useTodoStore } from "@/store/todo-store";
-import { createTodoSchema } from "@/validations/todo";
-import { useQueryClient, useMutation } from "@tanstack/react-query";
+
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 export const todoKeys = {
   all: ["todo"],
@@ -17,13 +23,61 @@ export function useCreateTodo() {
     mutationFn: (data) => createTodo(data),
     onSuccess: (result) => {
       if (result.success) {
-        addTodo(result.data);
+        console.log(result);
+
         queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
       }
     },
   });
 }
 
-// export function useTodo(){
-//     const setTodos = useTodoStore((state)=>state.setTodos)
-// }
+export function useTodos() {
+  const setTodos = useTodoStore((state) => state.setTodos);
+
+  return useQuery({
+    queryKey: todoKeys.lists(),
+    queryFn: async () => {
+      const result = await getTodos();
+      console.log(result);
+
+      if (result.success) {
+        // update zustand store with the fetched data;
+        setTodos(result.data);
+
+        return result.data;
+      }
+
+      throw new Error(result.Error);
+    },
+  });
+}
+
+export function useToggleTodo() {
+  const queryClient = useQueryClient();
+  const updateTodoInStore = useTodoStore((state) => state.updateTodo);
+
+  return useMutation({
+    mutationFn: (id) => toggleTodo(id),
+    onSuccess: (result, id) => {
+      if (result.success) {
+        updateTodoInStore(id, { completed: result.data.completed });
+        queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+      }
+    },
+  });
+}
+
+export function useDeleteTodo() {
+  const queryClient = useQueryClient();
+  const removeTodo = useTodoStore((state) => state.removeTodo);
+
+  return useMutation({
+    mutationFn: (id) => deleteTodo(id),
+    onSuccess: (result, id) => {
+      if (result.success) {
+        removeTodo(id);
+        queryClient.invalidateQueries({ queryKey: todoKeys.lists() });
+      }
+    },
+  });
+}
