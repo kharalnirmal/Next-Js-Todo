@@ -1,3 +1,4 @@
+import TodoFilter from "@/components/todo-filter";
 import TodoForm from "@/components/todo-form";
 import TodoLists from "@/components/todo-lists";
 import { Button } from "@/components/ui/button";
@@ -18,6 +19,7 @@ export default async function Home() {
 
         <main>
           <TodoForm />
+          <TodoFilter />
           <TodoLists />
         </main>
       </div>
